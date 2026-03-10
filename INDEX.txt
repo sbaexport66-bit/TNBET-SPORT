@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TN BET | Elite Virtual Platform</title>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88; --secondary: #00d4ff; --bg: #050a12;
+            --card: #121a26; --gold: #ffb800; --danger: #ff4757;
+        }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; transition: 0.3s; }
+        
+        /* UI ELEMENTS */
+        header { background: rgba(0,0,0,0.9); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); position: sticky; top:0; z-index: 999; backdrop-filter: blur(10px); }
+        nav { display: flex; justify-content: center; gap: 15px; padding: 12px; background: #000; border-bottom: 1px solid #222; overflow-x: auto; }
+        nav a { color: #888; text-decoration: none; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.8rem; font-family: 'Orbitron'; white-space: nowrap; }
+        nav a:hover, nav a.active-link { color: var(--primary); }
+
+        .section { display: none; padding: 20px; max-width: 1200px; margin: auto; animation: fadeIn 0.4s; }
+        .active-sec { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .btn-main { background: var(--primary); color: black; border: none; padding: 12px 30px; font-family: 'Orbitron'; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 15px var(--primary); transition: 0.3s; width: 100%; margin-top: 10px; }
+        .btn-main:hover { transform: scale(1.02); filter: brightness(1.1); }
+        
+        /* GAMES */
+        .game-container { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .mine-tile { height: 55px; background: #1c2635; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.2s; border: 1px solid #2c3e50; }
+        .mine-tile.revealed { cursor: default; pointer-events: none; }
+        
+        .wheel { width: 220px; height: 220px; border-radius: 50%; border: 8px solid #222; margin: 20px auto; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); background: conic-gradient(#e74c3c 0% 48%, #2c3e50 48% 96%, #27ae60 96% 100%); position: relative; }
+        .wheel::after { content: '▼'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); color: var(--gold); font-size: 25px; }
+
+        /* SPORT */
+        .match-card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; }
+        .odd-btn { background: #1a2433; border: 1px solid #333; color: var(--primary); padding: 8px 12px; cursor: pointer; border-radius: 5px; font-weight: bold; min-width: 55px; margin-left: 5px; transition: 0.2s; }
+        .odd-btn:hover { background: var(--primary); color: black; }
+
+        /* OVERLAYS */
+        .welcome-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0a1f16, #050a12); z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
+        #betSlip { position: fixed; bottom: 20px; right: 20px; width: 260px; background: var(--card); border: 2px solid var(--primary); padding: 15px; border-radius: 15px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.9); display: none; }
+        .admin-input { width: 100%; background: #000; color: white; border: 1px solid #333; padding: 12px; box-sizing: border-box; border-radius: 8px; font-family: 'Orbitron'; margin: 10px 0; }
+        
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 10001; pointer-events: none; border-radius: 2px; animation: fall 2s linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<div id="welcomePage" class="welcome-overlay">
+    <div>
+        <h1 style="font-family:'Orbitron'; font-size:4rem; color:var(--primary); margin:0;">TN<span>BET</span></h1>
+        <p style="letter-spacing:4px; color:#888; margin-bottom:40px;">ELITE VIRTUAL GAMING</p>
+        <button class="btn-main" onclick="startApp()">DEMARRER</button>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div style="font-family:'Orbitron'; color:var(--primary); font-size:1.5rem; font-weight:bold;">TN<span>BET</span></div>
+    <div style="text-align:right; min-width: 150px;">
+        <div id="vipLevel" style="font-size:0.7rem; color:var(--gold); font-weight:bold; letter-spacing:1px; margin-bottom:4px;">VIP BRONZE</div>
+        <div style="width:100%; height:4px; background:#222; border-radius:10px; overflow:hidden; margin-bottom:8px;">
+            <div id="vipBar" style="width:0%; height:100%; background:linear-gradient(90deg, var(--primary), var(--secondary)); transition: 0.5s;"></div>
+        </div>
+        <div id="mainBalance" style="font-size:1.4rem; font-weight:bold;">1000.00 <span style="color:var(--primary); font-size:0.8rem;">TND</span></div>
+    </div>
+</header>
+
+<nav>
+    <a onclick="showSec('sportsPage')" class="nav-item active-link">⚽ SPORTS</a>
+    <a onclick="showSec('casinoPage')" class="nav-item">🎰 CASINO</a>
+    <a onclick="showSec('depositPage')" class="nav-item">💳 RECHARGE</a>
+    <a onclick="showSec('profilePage')" class="nav-item">👤 PROFIL</a>
+</nav>
+
+<main>
+    <!-- SPORTS -->
+    <section id="sportsPage" class="section active-sec">
+        <h3 style="font-family:'Orbitron'; color:var(--secondary); font-size:0.9rem;">🔴 MATCHS EN DIRECT</h3>
+        <div id="matchList"></div>
+    </section>
+
+    <!-- CASINO -->
+    <section id="casinoPage" class="section">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <!-- CRASH -->
+            <div class="game-container" style="border-top: 4px solid var(--danger);">
+                <h3 style="color:var(--danger); font-family:'Orbitron'; margin-top:0;">🚀 CRASH AVIATOR</h3>
+                <div id="crashMulti" style="font-size:4rem; text-align:center; margin:30px 0; font-weight:bold; font-family:'Orbitron';">1.00x</div>
+                <button onclick="handleCrashBtn()" id="crashBtn" class="btn-main" style="background:var(--danger)">PARIER 10 TND</button>
+            </div>
+            <!-- MINES -->
+            <div class="game-container" style="border-top: 4px solid var(--secondary);">
+                <h3 style="color:var(--secondary); font-family:'Orbitron'; margin-top:0;">💎 DIAMOND MINES</h3>
+                <div id="minesGrid" class="mines-grid"></div>
+                <div id="minesPotential" style="text-align:center; color:var(--gold); font-weight:bold;">Gain actuel: 0.00 TND</div>
+                <button onclick="initMines()" id="minesBtn" class="btn-main" style="background:var(--secondary)">JOUER (10 TND)</button>
+            </div>
+        </div>
+        <!-- ROULETTE -->
+        <div class="game-container" style="text-align:center; border-top: 4px solid var(--gold); margin-top:20px;">
+            <h3 style="color:var(--gold); font-family:'Orbitron'; margin-top:0;">🎡 ROULETTE PRO</h3>
+            <div id="wheel" class="wheel"></div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="playRoulette('red')" style="background:#e74c3c; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer;">ROUGE x2</button>
+                <button onclick="playRoulette('green')" style="background:#27ae60; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer;">ZERO x35</button>
+                <button onclick="playRoulette('black')" style="background:#2c3e50; border:none; padding:10px; border-radius:5px; color:white; cursor:pointer;">NOIR x2</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- RECHARGE -->
+    <section id="depositPage" class="section">
+        <div class="game-container" style="border-top: 4px solid var(--primary); text-align:center; max-width:400px; margin:auto;">
+            <h2 style="font-family:'Orbitron'; color:var(--primary);">💳 DÉPÔT</h2>
+            <p style="color:#888; font-size:0.8rem;">🎁 Bonus spécial : <b>+12% OFFERTS</b></p>
+            <input type="number" id="depAmount" class="admin-input" placeholder="Montant TND">
+            <div id="bonusPreview" style="color:var(--gold); font-weight:bold; margin-bottom:15px;">+ 0.00 TND Bonus</div>
+            <button onclick="processDeposit()" class="btn-main">RECHARGER</button>
+        </div>
+    </section>
+
+    <!-- PROFIL & STATS -->
+    <section id="profilePage" class="section">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px;">
+            <div class="game-container" style="text-align:center; padding:10px;"><div style="font-size:0.6rem; color:#888;">WIN RATE</div><div id="statWinRate" style="color:var(--primary); font-weight:bold;">0%</div></div>
+            <div class="game-container" style="text-align:center; padding:10px;"><div style="font-size:0.6rem; color:#888;">TOTAL MISÉ</div><div id="statTotalWagered" style="font-weight:bold;">0</div></div>
+            <div class="game-container" style="text-align:center; padding:10px;"><div style="font-size:0.6rem; color:#888;">PROFIT</div><div id="statNetProfit" style="font-weight:bold;">0</div></div>
+        </div>
+        <h3 style="font-family:'Orbitron'; font-size:0.8rem; color:var(--secondary);">📜 HISTORIQUE DES PARIS</h3>
+        <div id="historyList"></div>
+        <button onclick="resetGame()" style="background:none; border:1px solid #333; color:#555; padding:5px; font-size:0.7rem; margin-top:20px; cursor:pointer;">Réinitialiser le compte</button>
+    </section>
+</main>
+
+<!-- TICKET DE PARI -->
+<div id="betSlip">
+    <h4 style="margin:0 0 10px 0; font-family:'Orbitron'; font-size:0.8rem; border-bottom:1px solid #333;">MON TICKET</h4>
+    <div id="slipContent" style="font-size:0.8rem; margin-bottom:10px;"></div>
+    <input type="number" id="betAmount" value="10" class="admin-input" style="padding:5px;">
+    <button onclick="placeSportsBet()" class="btn-main" style="padding:8px;">VALIDER</button>
+</div>
+
+<script>
+// --- VARIABLES GLOBALES ---
+let balance = 1000.00;
+let totalWagered = 0;
+let betHistory = [];
+let selectedBet = null;
+
+// --- INITIALISATION ---
+window.onload = () => {
+    loadPlayerData();
+    loadMatches();
+};
+
+function startApp() { document.getElementById('welcomePage').style.display = 'none'; }
+
+function showSec(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-link'));
+    document.getElementById(id).classList.add('active-sec');
+    if(id === 'profilePage') updateStats();
+    document.getElementById('betSlip').style.display = 'none';
+}
+
+// --- CORE: UI & SAVE ---
+function updateUI() {
+    balance = Math.round(balance * 100) / 100;
+    document.getElementById('mainBalance').innerHTML = `${balance.toFixed(2)} <span style="color:var(--primary); font-size:0.8rem;">TND</span>`;
+    
+    // VIP Progress
+    const progress = (totalWagered % 5000) / 5000 * 100;
+    document.getElementById('vipBar').style.width = progress + "%";
+    const levelLabel = document.getElementById('vipLevel');
+    if (totalWagered >= 10000) levelLabel.innerText = "💎 VIP GOLD";
+    else if (totalWagered >= 2000) levelLabel.innerText = "🥈 VIP SILVER";
+    
+    savePlayerData();
+}
+
+function savePlayerData() {
+    localStorage.setItem('tnBet_data', JSON.stringify({balance, totalWagered, betHistory}));
+}
+
+function loadPlayerData() {
+    const saved = localStorage.getItem('tnBet_data');
+    if(saved) {
+        const data = JSON.parse(saved);
+        balance = data.balance;
+        totalWagered = data.totalWagered;
+        betHistory = data.betHistory;
+        updateUI();
+    }
+}
+
+function addHistory(game, bet, status, payout) {
+    betHistory.unshift({ date: new Date().toLocaleTimeString(), game, bet, status, payout });
+    if(betHistory.length > 20) betHistory.pop();
+    renderHistory();
+}
+
+function renderHistory() {
+    const list = document.getElementById('historyList');
+    if(!list) return;
+    list.innerHTML = betHistory.map(h => `
+        <div style="background:#0d141f; padding:10px; border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between; font-size:0.8rem; border-left:3px solid ${h.payout > 0 ? 'var(--primary)' : 'var(--danger)'}">
+            <div><b>${h.game}</b><br><small style="color:#555">${h.date}</small></div>
+            <div style="text-align:right"><b>${h.payout} TND</b><br><small>${h.payout > 0 ? 'GAGNÉ' : 'PERDU'}</small></div>
+        </div>
+    `).join('');
+}
+
+// --- JEU: MINES ---
+let minesGame = { active: false, bombs: [], revealed: 0 };
+function initMines() {
+    if(minesGame.active) { cashOutMines(); return; }
+    if(balance < 10) return alert("Solde insuffisant");
+    
+    balance -= 10; totalWagered += 10;
+    minesGame = { active: true, revealed: 0, bombs: Array.from({length:25},(_,i)=>i).sort(()=>Math.random()-0.5).slice(0,3) };
+    
+    const grid = document.getElementById('minesGrid');
+    grid.innerHTML = '';
+    for(let i=0; i<25; i++) {
+        const t = document.createElement('div');
+        t.className = 'mine-tile';
+        t.onclick = () => revealMine(i, t);
+        grid.appendChild(t);
+    }
+    document.getElementById('minesBtn').innerText = "CASH OUT (0.00)";
+    updateUI();
+}
+
+function revealMine(idx, el) {
+    if(!minesGame.active || el.classList.contains('revealed')) return;
+    el.classList.add('revealed');
+    if(minesGame.bombs.includes(idx)) {
+        el.innerHTML = '💣'; el.style.background = 'var(--danger)';
+        minesGame.active = false;
+        addHistory('MINES', 10, 'LOSS', 0);
+        setTimeout(()=> { alert("BOOM!"); resetMinesUI(); }, 500);
+    } else {
+        el.innerHTML = '💎'; el.style.background = 'var(--primary)'; el.style.color = 'black';
+        minesGame.revealed++;
+        let gain = 10 * Math.pow(1.2, minesGame.revealed);
+        document.getElementById('minesBtn').innerText = `CASH OUT (${gain.toFixed(2)})`;
+    }
+}
+
+function cashOutMines() {
+    let gain = 10 * Math.pow(1.2, minesGame.revealed);
+    balance += gain; celebrate();
+    addHistory('MINES', 10, 'WIN', gain);
+    resetMinesUI(); updateUI();
+}
+
+function resetMinesUI() {
+    minesGame.active = false;
+    document.getElementById('minesBtn').innerText = "JOUER (10 TND)";
+    document.getElementById('minesGrid').innerHTML = '';
+}
+
+// --- JEU: CRASH ---
+let crashState = { running: false, multi: 1.0, limit: 0, timer: null };
+function handleCrashBtn() {
+    if(crashState.running) {
+        let win = 10 * crashState.multi;
+        balance += win; celebrate();
+        addHistory('CRASH', 10, 'WIN', win);
+        stopCrash();
+    } else {
+        if(balance < 10) return;
+        balance -= 10; totalWagered += 10; updateUI();
+        crashState = { running: true, multi: 1.0, limit: (Math.random() * 5 + 1).toFixed(2) };
+        document.getElementById('crashBtn').innerText = "CASH OUT";
+        crashState.timer = setInterval(() => {
+            crashState.multi += 0.02;
+            document.getElementById('crashMulti').innerText = crashState.multi.toFixed(2) + "x";
+            if(crashState.multi >= crashState.limit) {
+                document.getElementById('crashMulti').style.color = 'var(--danger)';
+                addHistory('CRASH', 10, 'LOSS', 0);
+                stopCrash();
+            }
+        }, 100);
+    }
+}
+function stopCrash() {
+    clearInterval(crashState.timer); crashState.running = false;
+    document.getElementById('crashBtn').innerText = "PARIER 10 TND";
+    setTimeout(()=> { document.getElementById('crashMulti').style.color = 'white'; }, 2000);
+    updateUI();
+}
+
+// --- SPORT ---
+const matches = [{t:"EST vs ESS", o:[1.8, 3.0, 4.0]}, {t:"CA vs CSS", o:[2.1, 2.9, 3.5]}];
+function loadMatches() {
+    document.getElementById('matchList').innerHTML = matches.map(m => `
+        <div class="match-card">
+            <span>${m.t}</span>
+            <div>
+                <button class="odd-btn" onclick="openSlip('${m.t}','1',${m.o[0]})">${m.o[0]}</button>
+                <button class="odd-btn" onclick="openSlip('${m.t}','X',${m.o[1]})">${m.o[1]}</button>
+                <button class="odd-btn" onclick="openSlip('${m.t}','2',${m.o[2]})">${m.o[2]}</button>
+            </div>
+        </div>
+    `).join('');
+}
+function openSlip(t, s, o) {
+    selectedBet = {t, s, o};
+    document.getElementById('betSlip').style.display = 'block';
+    document.getElementById('slipContent').innerHTML = `${t}<br>Prono: <b>${s}</b> | Cote: <b>${o}</b>`;
+}
+function placeSportsBet() {
+    let amt = parseFloat(document.getElementById('betAmount').value);
+    if(balance < amt) return;
+    balance -= amt; totalWagered += amt;
+    addHistory('SPORT: '+selectedBet.t, amt, 'WIN', amt*selectedBet.o); // Sim win pour démo
+    document.getElementById('betSlip').style.display = 'none';
+    celebrate(); updateUI();
+}
+
+// --- BONUS 12% ---
+document.getElementById('depAmount').addEventListener('input', function() {
+    let bonus = (this.value * 0.12).toFixed(2);
+    document.getElementById('bonusPreview').innerText = `+ ${bonus} TND (Bonus 12%)`;
+});
+function processDeposit() {
+    let amt = parseFloat(document.getElementById('depAmount').value);
+    if(amt < 10) return alert("Min 10 TND");
+    let total = amt * 1.12;
+    balance += total; celebrate(); updateUI();
+    alert("Compte crédité !");
+}
+
+// --- UTILS ---
+function celebrate() {
+    for(let i=0; i<30; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random()*100+'vw';
+        c.style.background = `hsl(${Math.random()*360}, 70%, 50%)`;
+        c.style.animationDuration = (Math.random()*1+1)+'s';
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(), 2000);
+    }
+}
+function updateStats() {
+    document.getElementById('statWinRate').innerText = betHistory.length ? (betHistory.filter(h=>h.payout>0).length/betHistory.length*100).toFixed(0)+"%" : "0%";
+    document.getElementById('statTotalWagered').innerText = totalWagered.toFixed(2);
+    let profit = betHistory.reduce((a,b)=>a+(b.payout-b.bet),0);
+    document.getElementById('statNetProfit').innerText = profit.toFixed(2);
+}
+function resetGame() { localStorage.clear(); location.reload(); }
+
+// ROULETTE
+function playRoulette(betColor) {
+    if(balance < 10) return;
+    balance -= 10; totalWagered += 10; updateUI();
+    const deg = Math.floor(Math.random()*360) + 1440;
+    document.getElementById('wheel').style.transform = `rotate(${deg}deg)`;
+    setTimeout(()=> {
+        let win = Math.random() > 0.7; // Sim simple
+        if(win) { balance += 20; celebrate(); addHistory('ROULETTE', 10, 'WIN', 20); }
+        else addHistory('ROULETTE', 10, 'LOSS', 0);
+        updateUI();
+    }, 4000);
+}
+</script>
+</body>
+</html>
